@@ -1,0 +1,11 @@
+cython
+dask[complete]
+h5py
+jax
+memory_profiler
+numpy==1.26.4
+pandas[all]==1.3.5
+psutil
+pympler
+sqlalchemy
+tables==3.6.1
