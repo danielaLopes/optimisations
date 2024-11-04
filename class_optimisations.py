@@ -3,8 +3,13 @@ import sys
 from dataclasses import dataclass
 from pympler import asizeof
 
+N_ITERS = 100_000_000
 
-N_ITERS = 10_000_000
+
+# Baseline
+class Empty:
+    pass
+
 
 # Regular class
 class RegularPerson:
@@ -35,6 +40,9 @@ class SlottedPerson:
 def compare_classes():
     args = {"name": "John", "age": 30, "email": "john@example.com"}
 
+    empty = Empty()
+    print(f"Empty class size: {asizeof.asizeof(empty):.4f} bytes")
+
     regular = RegularPerson(**args)
     data = DataPerson(**args)
     slotted = SlottedPerson(**args)
@@ -60,7 +68,6 @@ def compare_classes():
     print(f"Regular class: {regular_time:.4f} seconds")
     print(f"Data class: {data_time:.4f} seconds")
     print(f"Slotted class: {slotted_time:.4f} seconds")
-
 
 if __name__ == "__main__":
     compare_classes()
