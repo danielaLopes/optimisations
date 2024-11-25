@@ -1,13 +1,22 @@
+# csv_examples.py
+from __future__ import annotations
+
 import csv
 import gc
 from functools import partial
 import mmap
 from multiprocessing import Pool
 import os
+from pathlib import Path
+import typing
+
 from utils import log_memory_usage, log_execution_time
 
+if typing.TYPE_CHECKING:
+    from typing import *
 
-def generate_large_csv(filename, num_rows):
+
+def generate_large_csv(filename: Union[Path, str], num_rows: int) -> None:
     """
     Helper function to generate a large CSV file
 
@@ -21,11 +30,24 @@ def generate_large_csv(filename, num_rows):
         for i in range(num_rows):
             writer.writerow([i, i * 2])
 
+@log_memory_usage
+@log_execution_time
+def process_csv_non_optimised(filename: Union[Path, str]) -> None:
+    """ Read entire file to memory at once. """
+    with open(filename, 'r') as csvfile:
+        all_data = list(csv.DictReader(csvfile))
+
+    total = 0
+
+    for row in all_data:
+        total += int(row['value'])
+
+    print(f"Non optimised method - Total sum: {total}")
 
 # 1. Chunking
 @log_memory_usage
 @log_execution_time
-def process_csv_in_chunks(filename, chunk_size=1000):
+def process_csv_in_chunks(filename: Union[Path, str], chunk_size=1000) -> None:
     total = 0
     with open(filename, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -44,7 +66,7 @@ def process_csv_in_chunks(filename, chunk_size=1000):
 # 2. Streaming
 @log_memory_usage
 @log_execution_time
-def process_csv_streaming(filename):
+def process_csv_streaming(filename: Union[Path, str]) -> None:
     total = 0
     with open(filename, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -57,7 +79,7 @@ def process_csv_streaming(filename):
 # 3. Memory-mapped files
 @log_memory_usage
 @log_execution_time
-def process_csv_mmap(filename):
+def process_csv_mmap(filename: Union[Path, str]) -> None:
     total = 0
     with open(filename, 'r') as csvfile:
         mm = mmap.mmap(csvfile.fileno(), 0, prot=mmap.PROT_READ)
@@ -72,8 +94,7 @@ def process_csv_mmap(filename):
 
 
 # 4. Distributed processing
-@log_memory_usage
-def process_chunk(filename, start, end):
+def process_chunk(filename: Union[Path, str], start: int, end: int) -> None:
     total = 0
     with open(filename, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -84,7 +105,7 @@ def process_chunk(filename, start, end):
 
 @log_memory_usage
 @log_execution_time
-def process_csv_distributed(filename, num_processes):
+def process_csv_distributed(filename: Union[Path, str], num_processes: int) -> None:
     # Get total number of rows
     with open(filename, 'r') as csvfile:
         num_rows = sum(1 for _ in csvfile) - 1  # Subtract 1 for header
@@ -104,12 +125,15 @@ def process_csv_distributed(filename, num_processes):
 # Main execution
 if __name__ == "__main__":
     filename = "large_data.csv"
-    num_rows = 100_000_000
+    num_rows = 10_000_000
 
     print(f"Generating CSV file with {num_rows} rows...")
     generate_large_csv(filename, num_rows)
+    gc.collect()
 
     print("\nProcessing large CSV file using different methods:")
+    process_csv_non_optimised(filename)
+    gc.collect()
     process_csv_in_chunks(filename)
     gc.collect()
     process_csv_streaming(filename)
